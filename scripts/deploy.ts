@@ -14,7 +14,7 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const CommentsContract = await hre.ethers.getContractFactory("Comments");
+  const CommentsContract = await ethers.getContractFactory("Comments");
   const contract = await CommentsContract.deploy();
 
   await contract.deployed();
