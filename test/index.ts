@@ -1,19 +1,29 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-describe("Greeter", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
+describe("Comments", function () {
+  it("Should add and fetch successfully", async function () {
+    const Comments = await ethers.getContractFactory("Comments");
+    const comments = await Comments.deploy();
+    await comments.deployed();
 
-    expect(await greeter.greet()).to.equal("Hello, world!");
+    expect(await comments.getComments()).to.be.lengthOf(0);
 
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
+    const tx1 = await comments.addComment("Web3はいいぞ");
+    await tx1.wait();
 
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
+    const res1 = await comments.getComments();
+    expect(res1).to.be.lengthOf(1);
+    expect(res1[0].id).to.equal(0);
+    expect(res1[0].message).to.equal("Web3はいいぞ");
 
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
+    const tx2 = await comments.addComment("Web3は最高だ！");
+    await tx2.wait();
+
+    const res2 = await comments.getComments();
+    expect(res2).to.be.lengthOf(2);
+    expect(res2[1].id).to.equal(1);
+    expect(res2[0].message).to.equal("Web3はいいぞ");
+    expect(res2[1].message).to.equal("Web3は最高だ！");
   });
 });
