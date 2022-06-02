@@ -82,7 +82,7 @@ export const getCurrentWalletConnected: () => Promise<{ address: string, status:
   }
 }
 
-export const addComment: (address: string, message: string) => Promise<{ status: string }> = async (address: string, message: string) => {
+export const addComment: (address: string, creator: string, message: string) => Promise<{ status: string }> = async (address: string, creator: string, message: string) => {
   if (!window.ethereum) {
     return {
       status:
@@ -99,7 +99,7 @@ export const addComment: (address: string, message: string) => Promise<{ status:
   const transactionParameters = {
     to: contractAddress,
     from: address,
-    data: commentsContract.methods.addComment(message).encodeABI(),
+    data: commentsContract.methods.addComment(creator, message).encodeABI(),
   }
 
   try {

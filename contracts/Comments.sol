@@ -7,6 +7,7 @@ contract Comments {
     struct Comment {
         uint32 id;
         address creator_address;
+        string creator;
         string message;
         uint created_at;
     }
@@ -20,10 +21,11 @@ contract Comments {
         return comments;
     }
 
-    function addComment(string calldata message) public {
+    function addComment(string calldata creator, string calldata message) public {
         Comment memory comment = Comment({
             id: idCounter,
             creator_address: msg.sender,
+            creator: creator,
             message: message,
             created_at: block.timestamp
         });

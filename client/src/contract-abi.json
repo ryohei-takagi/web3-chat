@@ -16,6 +16,11 @@
           },
           {
             "internalType": "string",
+            "name": "creator",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
             "name": "message",
             "type": "string"
           },
@@ -36,6 +41,11 @@
   },
   {
     "inputs": [
+      {
+        "internalType": "string",
+        "name": "creator",
+        "type": "string"
+      },
       {
         "internalType": "string",
         "name": "message",
@@ -62,6 +72,11 @@
             "internalType": "address",
             "name": "creator_address",
             "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "creator",
+            "type": "string"
           },
           {
             "internalType": "string",
