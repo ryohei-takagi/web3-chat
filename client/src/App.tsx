@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import './App.css'
+import {Comment} from './types/comment'
 import {
   addComment,
   commentsContract,
@@ -7,28 +8,45 @@ import {
   getCurrentWalletConnected,
   loadCurrentComments
 } from './util/interact'
-import {Comment} from './types/comment'
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  InputAdornment,
+  TextField,
+  Typography
+} from '@material-ui/core'
+import {AccountCircle} from '@material-ui/icons'
+import moment from 'moment'
+import Loading from './Loading'
 
 function App() {
   const [address, setAddress] = useState<string>("")
   const [creator, setCreator] = useState<string>("")
   const [message, setMessage] = useState<string>("")
   const [status, setStatus] = useState<string>("")
+  const [isError, setIsError] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const [comments, setComments] = useState<Comment[]>([])
 
   useEffect(() => {
     const fetchMessage = async() => {
+      setIsLoading(true)
       const comments = await loadCurrentComments()
       setComments(comments)
+      setIsLoading(false)
     }
     fetchMessage()
     addSmartContractListener()
 
     const fetchWallet = async() => {
-      const {address, status} = await getCurrentWalletConnected()
+      const { address, status, isError } = await getCurrentWalletConnected()
       setAddress(address)
       setStatus(status)
+      setIsError(isError)
     }
     fetchWallet()
     addWalletListener()
@@ -43,8 +61,10 @@ function App() {
         setMessage("")
 
         const fetchMessage = async() => {
+          setIsLoading(true)
           const comments = await loadCurrentComments()
           setComments(comments)
+          setIsLoading(false)
         }
         fetchMessage()
       }
@@ -58,42 +78,120 @@ function App() {
         if (accounts && accounts.length > 0) {
           setAddress(accounts[0])
           setStatus("👆🏽 さぁ、メッセージを送りましょう。")
+          setIsError(false)
         } else {
           setAddress("")
           setStatus("🦊 MetaMaskの接続設定をおこなってください。")
+          setIsError(true)
         }
       })
     } else {
       setStatus("🦊 MetaMaskをインストールしてください。")
+      setIsError(true)
     }
   }
 
   const connectWalletPressed = async() => {
-    const walletResponse = await connectWallet()
-    setAddress(walletResponse.address)
-    setStatus(walletResponse.status)
+    const { address, status, isError } = await connectWallet()
+    setAddress(address)
+    setStatus(status)
+    setIsError(isError)
   }
 
   const onSubmit = async() => {
-    const { status } = await addComment(address, creator, message);
+    setIsLoading(true)
+    const { status, isError } = await addComment(address, creator, message)
+    setIsLoading(false)
     setStatus(status)
+    setIsError(isError)
   }
 
   return (
     <div className="App">
-      {address.length > 0 ? <p>サインイン中</p> : <button onClick={connectWalletPressed}>サインイン</button>}
-      <p>{address.length > 0 && `あなたのアドレス：${address}`}</p>
-      <input placeholder="名前" type="text" value={creator} onChange={(e) => setCreator(e.target.value)}/>
-      <input placeholder="メッセージ本文" type="text" value={message} onChange={(e) => setMessage(e.target.value)}/>
-      <button onClick={onSubmit}>送信</button>
-      <p>{status}</p>
-      <ul>
+      <div className="App-connectButton">
+        {address.length > 0 ?
+          <p>サインイン中</p> :
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={connectWalletPressed}
+          >
+            サインイン
+          </Button>
+        }
+        <div className="App-address">
+          <p>{address.length > 0 && `あなたのアドレス：${address}`}</p>
+        </div>
+      </div>
+
+      <Box className="App-inputForm">
+        <TextField
+          variant="outlined"
+          placeholder="名前"
+          size="small"
+          type="text"
+          value={creator}
+          onChange={(e) => setCreator(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <AccountCircle />
+              </InputAdornment>
+            ),
+          }}
+          className="App-nameField"
+        />
+
+        <TextField
+          variant="outlined"
+          placeholder="メッセージ本文"
+          size="small"
+          type="text"
+          value={message} onChange={(e) => setMessage(e.target.value)}
+          className="App-textField"
+        />
+
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={onSubmit}
+          className="App-submitButton"
+        >
+          送信
+        </Button>
+      </Box>
+
+      <p className="App-status" style={{backgroundColor: isError ? '#ffe0e0' : '#e0ffe0'}}>{status}</p>
+
+      <div className="App-cardBox">
+        {isLoading && <Loading/>}
         {comments.map(comment => {
-          return <li key={comment.id}>{comment.creator} {comment.message}</li>
+          const isMyComment = comment.creator_address.toLowerCase() === address.toLowerCase()
+          const margin = isMyComment ? { marginLeft: 'auto', marginRight: '10px' } : undefined
+          return (
+            <Card className="App-card" style={margin}>
+              <CardHeader
+                avatar={
+                  <AccountCircle />
+                }
+                title={
+                  <>
+                    <p className="App-cardTitle">{comment.creator}</p>
+                  </>
+                }
+                subheader={moment(comment.created_at * 1000).format("Y-MM-DD HH:mm:ss")}
+              />
+              <CardContent>
+                <Typography variant="body2" component="p">
+                  {comment.message}
+                </Typography>
+              </CardContent>
+            </Card>
+          )
         })}
-      </ul>
+      </div>
     </div>
-  );
+  )
 }
 
 export default App

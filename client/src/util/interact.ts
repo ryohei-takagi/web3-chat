@@ -17,7 +17,7 @@ export const loadCurrentComments: () => Promise<Comment[]> = async () => {
   return comments
 }
 
-export const connectWallet: () => Promise<{ address: string, status: string }> = async () => {
+export const connectWallet: () => Promise<{ address: string, status: string, isError: boolean }> = async () => {
   if (window.ethereum) {
     try {
       const addressArray = await window.ethereum.request<string[]>({
@@ -28,11 +28,13 @@ export const connectWallet: () => Promise<{ address: string, status: string }> =
         return {
           address: addressArray[0] ?? "",
           status: "👆🏽 さぁ、メッセージを送りましょう。",
+          isError: false,
         }
       } else {
         return {
           address: "",
           status: "アドレスが取得できませんでした。",
+          isError: true,
         }
       }
 
@@ -40,17 +42,19 @@ export const connectWallet: () => Promise<{ address: string, status: string }> =
       return {
         address: "",
         status: "❌ " + (err instanceof Error ? err.message : "Internal Server Error."),
+        isError: true,
       }
     }
   } else {
     return {
       address: "",
       status: "🦊 MetaMaskをインストールしてください。",
+      isError: true,
     }
   }
 }
 
-export const getCurrentWalletConnected: () => Promise<{ address: string, status: string }> = async () => {
+export const getCurrentWalletConnected: () => Promise<{ address: string, status: string, isError: boolean }> = async () => {
   if (window.ethereum) {
     try {
       const addressArray = await window.ethereum.request<string[]>({
@@ -61,38 +65,57 @@ export const getCurrentWalletConnected: () => Promise<{ address: string, status:
         return {
           address: addressArray[0] ?? "",
           status: "👆🏽 さぁ、メッセージを送りましょう。",
+          isError: false,
         }
       } else {
         return {
           address: "",
           status: "🦊 MetaMaskの接続設定をおこなってください。",
+          isError: true,
         }
       }
     } catch (err: unknown) {
       return {
         address: "",
         status: "❌ " + (err instanceof Error ? err.message : "Internal Server Error."),
+        isError: true,
       }
     }
   } else {
     return {
       address: "",
       status: "🦊 MetaMaskをインストールしてください。",
+      isError: true,
     }
   }
 }
 
-export const addComment: (address: string, creator: string, message: string) => Promise<{ status: string }> = async (address: string, creator: string, message: string) => {
+export const addComment: (address: string, creator: string, message: string) => Promise<{ status: string, isError: boolean }> = async (address: string, creator: string, message: string) => {
   if (!window.ethereum) {
     return {
-      status:
-        "🦊 MetaMaskをインストールしてください。",
+      status: "🦊 MetaMaskをインストールしてください。",
+      isError: true,
+    }
+  }
+
+  if (!address) {
+    return {
+      status: "🦊 MetaMaskの接続設定をおこなってください。",
+      isError: true,
+    }
+  }
+
+  if (creator.trim() === "") {
+    return {
+      status: "名前を入力してください。",
+      isError: true,
     }
   }
 
   if (message.trim() === "") {
     return {
-      status: "メッセージが空です。",
+      status: "メッセージを入力してください。",
+      isError: true,
     }
   }
 
@@ -110,10 +133,12 @@ export const addComment: (address: string, creator: string, message: string) => 
 
     return {
       status: `メッセージの発行リクエストを送信しました。 TxHash=[${txHash}]`,
+      isError: false,
     }
   } catch (err: unknown) {
     return {
       status: "❌ " + (err instanceof Error ? err.message : "Internal Server Error."),
+      isError: true,
     }
   }
 }
